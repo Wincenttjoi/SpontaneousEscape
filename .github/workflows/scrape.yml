@@ -1,0 +1,43 @@
+name: Scrape Spontaneous Escapes
+
+on:
+  schedule:
+    - cron: "5 16 14 * *"   # 15th 00:05 SGT (16:05 UTC on 14th)
+    - cron: "0 1 22 * *"    # 22nd 09:00 SGT (01:00 UTC)
+    - cron: "0 1 1 * *"     # 1st 09:00 SGT  (01:00 UTC)
+  workflow_dispatch:          # allow manual trigger from GitHub UI
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium --with-deps
+
+      - name: Run scraper
+        env:
+          AMADEUS_CLIENT_ID: ${{ secrets.AMADEUS_CLIENT_ID }}
+          AMADEUS_CLIENT_SECRET: ${{ secrets.AMADEUS_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m src.main
+
+      - name: Commit updated data and dashboard
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/history.json docs/index.html
+          git diff --staged --quiet || git commit -m "chore: update deals $(date -u +%Y-%m-%d)"
+          git push

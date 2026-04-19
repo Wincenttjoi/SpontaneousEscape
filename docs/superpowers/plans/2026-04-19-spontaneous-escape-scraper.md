@@ -1065,7 +1065,7 @@ git commit -m "feat: add Scoot Spontaneous Escapes scraper"
 **Files:**
 - Create: `src/amadeus_client.py`
 
-> **Note:** The Amadeus free tier uses a test environment that returns simulated (not real) fare data. Register at [developers.amadeus.com](https://developers.amadeus.com) for free credentials. For production real-price data, request production access (also free, requires form).
+> **Note:** Amadeus integration is **optional**. If `AMADEUS_CLIENT_ID` is not set, the client returns `(None, None)` for all calls — nothing breaks. Add credentials later when available.
 
 - [ ] **Step 1: Create `src/amadeus_client.py`**
 
@@ -1079,25 +1079,22 @@ from amadeus import Client, ResponseError
 logger = logging.getLogger(__name__)
 
 
-def _client() -> Client:
-    return Client(
-        client_id=os.environ["AMADEUS_CLIENT_ID"],
-        client_secret=os.environ["AMADEUS_CLIENT_SECRET"],
-    )
-
-
 def get_cheapest_date(
     origin: str, destination: str, around_date: str
 ) -> tuple[str, float] | tuple[None, None]:
-    """Return (cheapest_date, price_SGD) within ±15 days of around_date, or (None, None) on failure."""
-    if not origin or not destination:
+    """Return (cheapest_date, price_SGD) within ±15 days of around_date, or (None, None) if credentials absent or on failure."""
+    if not os.environ.get("AMADEUS_CLIENT_ID") or not origin or not destination:
         return None, None
     try:
+        client = Client(
+            client_id=os.environ["AMADEUS_CLIENT_ID"],
+            client_secret=os.environ["AMADEUS_CLIENT_SECRET"],
+        )
         base = datetime.strptime(around_date, "%Y-%m-%d")
         start = (base - timedelta(days=15)).strftime("%Y-%m-%d")
         end = (base + timedelta(days=15)).strftime("%Y-%m-%d")
 
-        response = _client().shopping.flight_dates.get(
+        response = client.shopping.flight_dates.get(
             origin=origin,
             destination=destination,
             departureDate=f"{start},{end}",

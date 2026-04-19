@@ -104,7 +104,7 @@ Fixed rate: 100 Flair points = SGD 1.00.
 
 ### Amadeus Integration
 
-Queries `flight-offers-search` for ±15 days around each deal's travel date to surface a cheaper alternative date. Free tier: 2,000 calls/month (well within budget for 3× monthly runs). Uses test environment credentials.
+**Optional** — graceful degradation. Queries `flight-offers-search` for ±15 days around each deal's travel date to surface a cheaper alternative date. If `AMADEUS_CLIENT_ID` is not set in the environment, the client skips all API calls and leaves `amadeus_cheapest_date`/`amadeus_cheapest_price` as `None`. The dashboard and Telegram message already handle `None` — nothing breaks without credentials. When credentials are available: free tier, 2,000 calls/month. The `amadeus` package remains in `requirements.txt` but is not required at runtime.
 
 ---
 

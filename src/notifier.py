@@ -25,28 +25,24 @@ def _format_deal(d: Deal) -> list[str]:
 
 def build_message(deals: list[Deal]) -> str:
     today = date.today().strftime("%d %b %Y")
-    good = sorted(
-        [d for d in deals if d.is_good_deal],
+    sorted_deals = sorted(
+        deals,
         key=lambda d: d.cpm_kf or d.cpm_flair or 0,
         reverse=True,
     )
-    rest = [d for d in deals if not d.is_good_deal]
+    good_count = sum(1 for d in deals if d.is_good_deal)
 
     lines = [f"<b>✈️ Spontaneous Escape — {today}</b>"]
+    lines.append(f"{len(deals)} deals scraped · top 25% flagged ✅\n")
 
-    if good:
-        lines.append(f"\n<b>✅ GOOD DEALS ({len(good)} found)</b>")
-        lines.append("─" * 22)
-        for d in good:
-            lines.extend(_format_deal(d))
-    else:
-        lines.append("\nNo deals above threshold this run.")
+    if not sorted_deals:
+        lines.append("No deals found this run.")
+        return "\n".join(lines)
 
-    if rest:
-        lines.append(f"\n<b>All other deals ({len(rest)})</b>")
-        lines.append("─" * 22)
-        for d in rest:
-            lines.extend(_format_deal(d))
+    lines.append(f"<b>All deals ({len(sorted_deals)}, sorted by value)</b>")
+    lines.append("─" * 22)
+    for d in sorted_deals:
+        lines.extend(_format_deal(d))
 
     return "\n".join(lines)
 

@@ -2,9 +2,6 @@ from __future__ import annotations
 from src.models import Deal
 from src.award_charts import get_kf_miles, is_excluded
 
-KF_GOOD_DEAL_THRESHOLD = 1.5
-FLAIR_GOOD_DEAL_THRESHOLD = 0.8
-
 
 def calculate_cpm(cash_base: float, miles: int) -> float:
     if miles <= 0:
@@ -18,16 +15,27 @@ def enrich_deal(deal: Deal) -> Deal:
         deal.kf_miles = miles
         if miles:
             deal.cpm_kf = calculate_cpm(deal.cash_base, miles)
-            deal.is_good_deal = deal.cpm_kf >= KF_GOOD_DEAL_THRESHOLD
 
     elif deal.airline == "Scoot":
         flair_miles = int(deal.cash_base * 100)
         deal.flair_miles = flair_miles
         if flair_miles:
             deal.cpm_flair = calculate_cpm(deal.cash_base, flair_miles)
-            deal.is_good_deal = deal.cpm_flair >= FLAIR_GOOD_DEAL_THRESHOLD
 
     return deal
+
+
+def flag_top_percentile(deals: list[Deal], percentile: int = 75) -> list[Deal]:
+    cpms = [d.cpm_kf or d.cpm_flair or 0.0 for d in deals]
+    if not cpms:
+        return deals
+    sorted_cpms = sorted(cpms)
+    cutoff_index = int(len(sorted_cpms) * percentile / 100)
+    threshold = sorted_cpms[cutoff_index] if cutoff_index < len(sorted_cpms) else sorted_cpms[-1]
+    for deal in deals:
+        cpm = deal.cpm_kf or deal.cpm_flair or 0.0
+        deal.is_good_deal = cpm >= threshold and cpm > 0
+    return deals
 
 
 def filter_excluded(deals: list[Deal]) -> list[Deal]:

@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from dotenv import load_dotenv
 from src.scrapers.sia import scrape_sia
 from src.scrapers.scoot import scrape_scoot
-from src.cpm_calculator import enrich_deal, filter_excluded
+from src.cpm_calculator import enrich_deal, filter_excluded, flag_top_percentile
 from src.amadeus_client import get_cheapest_date
 from src.storage import save_run
 from src.dashboard import generate_dashboard
@@ -31,11 +31,13 @@ def main() -> None:
     logger.info(f"Total scraped: {len(all_deals)}")
 
     filtered = filter_excluded(all_deals)
-    logger.info(f"After region filter: {len(filtered)}")
+    filtered = [d for d in filtered if d.cabin in ("Economy", "Business")]
+    logger.info(f"After region + cabin filter: {len(filtered)}")
 
     enriched = [enrich_deal(d) for d in filtered]
+    flag_top_percentile(enriched, percentile=75)
     good_count = sum(1 for d in enriched if d.is_good_deal)
-    logger.info(f"Good deals: {good_count}")
+    logger.info(f"Top 25%% deals flagged: {good_count}")
 
     logger.info("Fetching Amadeus cheapest dates...")
     for deal in enriched:

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spontaneous Escape Deals</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f5f6fa; color: #2d3436; padding: 24px; }
+  header { margin-bottom: 24px; }
+  header h1 { font-size: 1.8rem; font-weight: 700; }
+  header p { color: #636e72; margin-top: 4px; font-size: 0.9rem; }
+  .section-title { font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; }
+  .cards { display: flex; flex-wrap: wrap; gap: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px;
+          min-width: 220px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .card.good { border-left: 4px solid #00b894; }
+  .card .dest { font-size: 1.1rem; font-weight: 600; }
+  .card .meta { font-size: 0.8rem; color: #636e72; margin: 4px 0 8px; }
+  .card .price { font-size: 1rem; margin-bottom: 4px; }
+  .card .cpm { font-size: 0.9rem; color: #00b894; font-weight: 600; }
+  .card .amadeus { font-size: 0.75rem; color: #636e72; margin-top: 6px; }
+  .filters { margin: 12px 0; display: flex; gap: 8px; }
+  .filters button { padding: 6px 16px; border: 1px solid #dfe6e9; border-radius: 20px;
+                    background: #fff; cursor: pointer; font-size: 0.85rem; }
+  .filters button.active { background: #0984e3; color: #fff; border-color: #0984e3; }
+  table { width: 100%; border-collapse: collapse; background: #fff;
+          border-radius: 12px; overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 0.85rem; }
+  th { background: #f8f9fa; padding: 10px 12px; text-align: left;
+       font-weight: 600; border-bottom: 1px solid #dfe6e9; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f1f2f6; }
+  tr:last-child td { border-bottom: none; }
+  tr.good td:first-child { border-left: 3px solid #00b894; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px;
+           font-size: 0.75rem; font-weight: 600; }
+  .badge.sia { background: #dfe6e9; color: #2d3436; }
+  .badge.scoot { background: #ffeaa7; color: #2d3436; }
+  .badge.good { background: #55efc4; color: #00695c; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spontaneous Escape Deals</h1>
+  <p>Last scraped: {{ run_at }} &nbsp;|&nbsp; Next run: {{ next_run }}</p>
+</header>
+
+{% if good_deals %}
+<div class="section-title">Good Deals ({{ good_deals|length }})</div>
+<div class="cards">
+  {% for d in good_deals %}
+  <div class="card good">
+    <div class="dest">SIN &rarr; {{ d.destination }} <span class="badge {{ d.airline|lower }}">{{ d.airline }}</span></div>
+    <div class="meta">{{ d.destination_city }} &nbsp;|&nbsp; {{ d.cabin }} &nbsp;|&nbsp; Travel: {{ d.travel_date }} &nbsp;|&nbsp; Book by: {{ d.book_by }}</div>
+    <div class="price">SGD {{ "%.0f"|format(d.cash_total) }} (tax: SGD {{ "%.0f"|format(d.tax) }}, base: SGD {{ "%.0f"|format(d.cash_base) }})</div>
+    {% if d.cpm_kf %}
+    <div class="cpm">KF: {{ "{:,}".format(d.kf_miles) }} miles &rarr; {{ "%.2f"|format(d.cpm_kf) }}c/mile</div>
+    {% endif %}
+    {% if d.cpm_flair %}
+    <div class="cpm">Flair: {{ "{:,}".format(d.flair_miles) }} pts &rarr; {{ "%.2f"|format(d.cpm_flair) }}c/mile</div>
+    {% endif %}
+    {% if d.amadeus_cheapest_date %}
+    <div class="amadeus">Cheapest nearby: {{ d.amadeus_cheapest_date }} @ SGD {{ "%.0f"|format(d.amadeus_cheapest_price) }}</div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p style="color:#636e72;margin:16px 0">No deals above threshold this run.</p>
+{% endif %}
+
+<div class="section-title">All Deals ({{ all_deals|length }})</div>
+<div class="filters">
+  <button class="active" onclick="filter('all', this)">All</button>
+  <button onclick="filter('SIA', this)">SIA</button>
+  <button onclick="filter('Scoot', this)">Scoot</button>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Airline</th><th>Route</th><th>City</th><th>Cabin</th>
+      <th>Travel Date</th><th>Book By</th>
+      <th>Total (SGD)</th><th>Tax</th><th>Base</th>
+      <th>Miles</th><th>CPM (c)</th><th>Deal?</th>
+      <th>Amadeus Alt</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for d in all_deals %}
+    <tr class="{% if d.is_good_deal %}good{% endif %} row-{{ d.airline }}">
+      <td><span class="badge {{ d.airline|lower }}">{{ d.airline }}</span></td>
+      <td>SIN &rarr; {{ d.destination }}</td>
+      <td>{{ d.destination_city }}</td>
+      <td>{{ d.cabin }}</td>
+      <td>{{ d.travel_date }}</td>
+      <td>{{ d.book_by }}</td>
+      <td>{{ "%.0f"|format(d.cash_total) }}</td>
+      <td>{{ "%.0f"|format(d.tax) }}</td>
+      <td>{{ "%.0f"|format(d.cash_base) }}</td>
+      <td>
+        {% if d.kf_miles %}KF {{ "{:,}".format(d.kf_miles) }}{% endif %}
+        {% if d.flair_miles %}Flair {{ "{:,}".format(d.flair_miles) }}{% endif %}
+      </td>
+      <td>
+        {% if d.cpm_kf %}{{ "%.2f"|format(d.cpm_kf) }}{% endif %}
+        {% if d.cpm_flair %}{{ "%.2f"|format(d.cpm_flair) }}{% endif %}
+      </td>
+      <td>{% if d.is_good_deal %}<span class="badge good">YES</span>{% endif %}</td>
+      <td>
+        {% if d.amadeus_cheapest_date %}{{ d.amadeus_cheapest_date }} @ {{ "%.0f"|format(d.amadeus_cheapest_price) }}{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<script>
+function filter(airline, btn) {
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('tbody tr').forEach(row => {
+    row.classList.toggle('hidden',
+      airline !== 'all' && !row.classList.contains('row-' + airline)
+    );
+  });
+}
+</script>
+</body>
+</html>

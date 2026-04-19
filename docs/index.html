@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spontaneous Escape Deals</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+         background: #f5f6fa; color: #2d3436; padding: 24px; }
+  header { margin-bottom: 24px; }
+  header h1 { font-size: 1.8rem; font-weight: 700; }
+  header p { color: #636e72; margin-top: 4px; font-size: 0.9rem; }
+  .section-title { font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; }
+  .cards { display: flex; flex-wrap: wrap; gap: 16px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px;
+          min-width: 220px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .card.good { border-left: 4px solid #00b894; }
+  .card .dest { font-size: 1.1rem; font-weight: 600; }
+  .card .meta { font-size: 0.8rem; color: #636e72; margin: 4px 0 8px; }
+  .card .price { font-size: 1rem; margin-bottom: 4px; }
+  .card .cpm { font-size: 0.9rem; color: #00b894; font-weight: 600; }
+  .card .amadeus { font-size: 0.75rem; color: #636e72; margin-top: 6px; }
+  .filters { margin: 12px 0; display: flex; gap: 8px; }
+  .filters button { padding: 6px 16px; border: 1px solid #dfe6e9; border-radius: 20px;
+                    background: #fff; cursor: pointer; font-size: 0.85rem; }
+  .filters button.active { background: #0984e3; color: #fff; border-color: #0984e3; }
+  table { width: 100%; border-collapse: collapse; background: #fff;
+          border-radius: 12px; overflow: hidden;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.08); font-size: 0.85rem; }
+  th { background: #f8f9fa; padding: 10px 12px; text-align: left;
+       font-weight: 600; border-bottom: 1px solid #dfe6e9; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f1f2f6; }
+  tr:last-child td { border-bottom: none; }
+  tr.good td:first-child { border-left: 3px solid #00b894; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px;
+           font-size: 0.75rem; font-weight: 600; }
+  .badge.sia { background: #dfe6e9; color: #2d3436; }
+  .badge.scoot { background: #ffeaa7; color: #2d3436; }
+  .badge.good { background: #55efc4; color: #00695c; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Spontaneous Escape Deals</h1>
+  <p>Last scraped: 2026-04-15 00:05 SGT &nbsp;|&nbsp; Next run: 22nd of this month at 09:00 SGT</p>
+</header>
+
+
+<div class="section-title">Good Deals (1)</div>
+<div class="cards">
+  
+  <div class="card good">
+    <div class="dest">SIN &rarr; BKK <span class="badge sia">SIA</span></div>
+    <div class="meta">Bangkok &nbsp;|&nbsp; Economy &nbsp;|&nbsp; Travel: 2026-05-10 &nbsp;|&nbsp; Book by: 2026-04-20</div>
+    <div class="price">SGD 180 (tax: SGD 42, base: SGD 138)</div>
+    
+    <div class="cpm">KF: 7,500 miles &rarr; 1.84c/mile</div>
+    
+    
+    
+  </div>
+  
+</div>
+
+
+<div class="section-title">All Deals (1)</div>
+<div class="filters">
+  <button class="active" onclick="filter('all', this)">All</button>
+  <button onclick="filter('SIA', this)">SIA</button>
+  <button onclick="filter('Scoot', this)">Scoot</button>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Airline</th><th>Route</th><th>City</th><th>Cabin</th>
+      <th>Travel Date</th><th>Book By</th>
+      <th>Total (SGD)</th><th>Tax</th><th>Base</th>
+      <th>Miles</th><th>CPM (c)</th><th>Deal?</th>
+      <th>Amadeus Alt</th>
+    </tr>
+  </thead>
+  <tbody>
+    
+    <tr class="good row-SIA">
+      <td><span class="badge sia">SIA</span></td>
+      <td>SIN &rarr; BKK</td>
+      <td>Bangkok</td>
+      <td>Economy</td>
+      <td>2026-05-10</td>
+      <td>2026-04-20</td>
+      <td>180</td>
+      <td>42</td>
+      <td>138</td>
+      <td>
+        KF 7,500
+        
+      </td>
+      <td>
+        1.84
+        
+      </td>
+      <td><span class="badge good">YES</span></td>
+      <td>
+        
+      </td>
+    </tr>
+    
+  </tbody>
+</table>
+
+<script>
+function filter(airline, btn) {
+  document.querySelectorAll('.filters button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('tbody tr').forEach(row => {
+    row.classList.toggle('hidden',
+      airline !== 'all' && !row.classList.contains('row-' + airline)
+    );
+  });
+}
+</script>
+</body>
+</html>

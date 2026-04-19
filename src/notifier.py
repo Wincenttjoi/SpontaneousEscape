@@ -9,6 +9,20 @@ from src.models import Deal
 logger = logging.getLogger(__name__)
 
 
+def _format_deal(d: Deal) -> list[str]:
+    lines = [f"\n<b>{d.airline}</b> | SIN→{d.destination} | {d.travel_date}"]
+    lines.append(f"{d.cabin} | SGD {d.cash_total:.0f} (tax: SGD {d.tax:.0f})")
+    if d.cpm_kf:
+        flag = "✅" if d.is_good_deal else ""
+        lines.append(f"KF: {d.kf_miles:,} miles → {d.cpm_kf:.2f}c/mile {flag}".strip())
+    if d.cpm_flair:
+        flag = "✅" if d.is_good_deal else ""
+        lines.append(f"Flair: {d.flair_miles:,} pts → {d.cpm_flair:.2f}c/mile {flag}".strip())
+    if d.amadeus_cheapest_date:
+        lines.append(f"Cheapest nearby: {d.amadeus_cheapest_date} @ SGD {d.amadeus_cheapest_price:.0f}")
+    return lines
+
+
 def build_message(deals: list[Deal]) -> str:
     today = date.today().strftime("%d %b %Y")
     good = sorted(
@@ -16,23 +30,23 @@ def build_message(deals: list[Deal]) -> str:
         key=lambda d: d.cpm_kf or d.cpm_flair or 0,
         reverse=True,
     )
+    rest = [d for d in deals if not d.is_good_deal]
 
-    if not good:
-        return f"Spontaneous Escape scraped ({today}) — no deals above threshold this run."
+    lines = [f"<b>✈️ Spontaneous Escape — {today}</b>"]
 
-    lines = [f"<b>Spontaneous Escape — {today}</b>\n"]
-    lines.append(f"GOOD DEALS ({len(good)} found)")
-    lines.append("─" * 22)
+    if good:
+        lines.append(f"\n<b>✅ GOOD DEALS ({len(good)} found)</b>")
+        lines.append("─" * 22)
+        for d in good:
+            lines.extend(_format_deal(d))
+    else:
+        lines.append("\nNo deals above threshold this run.")
 
-    for d in good:
-        lines.append(f"\n<b>{d.airline}</b> | SIN→{d.destination} | {d.travel_date}")
-        lines.append(f"{d.cabin} | SGD {d.cash_total:.0f} (tax: SGD {d.tax:.0f})")
-        if d.cpm_kf:
-            lines.append(f"KF: {d.kf_miles:,} miles → {d.cpm_kf:.2f}c/mile")
-        if d.cpm_flair:
-            lines.append(f"Flair: {d.flair_miles:,} pts → {d.cpm_flair:.2f}c/mile")
-        if d.amadeus_cheapest_date:
-            lines.append(f"Cheapest nearby: {d.amadeus_cheapest_date} @ SGD {d.amadeus_cheapest_price:.0f}")
+    if rest:
+        lines.append(f"\n<b>All other deals ({len(rest)})</b>")
+        lines.append("─" * 22)
+        for d in rest:
+            lines.extend(_format_deal(d))
 
     return "\n".join(lines)
 
